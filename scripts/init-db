@@ -1,0 +1,41 @@
+#!/bin/sh
+# Builds data/dev.db the way the grader builds its database: contract/schema.sql,
+# then contract/seed.sql, then your migrations through the same default migrate
+# script the base image ships. Needs the sqlite3 CLI.
+#
+# Usage: scripts/init-db [--force]
+# Refuses to replace an existing data/dev.db unless you pass --force.
+#
+# If you replaced /app/migrate, set MIGRATE to the path of your migrate script. It
+# runs with sh, with DATABASE_PATH and MIGRATIONS_DIR set.
+set -eu
+cd "$(dirname "$0")/.."
+
+force=0
+case "$#:${1:-}" in
+  0:) ;;
+  1:--force) force=1 ;;
+  *) echo "usage: scripts/init-db [--force]" >&2; exit 2 ;;
+esac
+
+command -v sqlite3 >/dev/null || { echo "init-db: install the sqlite3 CLI first" >&2; exit 1; }
+
+if [ -e data/dev.db ] && [ "$force" -eq 0 ]; then
+  cat >&2 <<'EOF'
+init-db: data/dev.db already exists, so nothing was changed.
+Rebuilding it deletes every row in it, including the webhook deliveries and sync
+runs your service recorded. That traffic is part of what you commit.
+To apply new migrations to the existing database instead, run the default migrate
+on it; it skips the files it already applied:
+  DATABASE_PATH=data/dev.db MIGRATIONS_DIR=migrations sh images/base/migrate
+To delete it and rebuild from scratch anyway, run: scripts/init-db --force
+EOF
+  exit 1
+fi
+
+mkdir -p data
+rm -f data/dev.db data/dev.db-wal data/dev.db-shm
+sqlite3 -bail data/dev.db < contract/schema.sql
+sqlite3 -bail data/dev.db < contract/seed.sql
+DATABASE_PATH=data/dev.db MIGRATIONS_DIR=migrations sh "${MIGRATE:-images/base/migrate}"
+echo "init-db: data/dev.db is ready"

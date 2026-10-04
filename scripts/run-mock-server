@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -e
+
+# Detect platform and run the correct Argyle mock server binary
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+BIN_DIR="$PROJECT_ROOT/bin"
+
+OS="$(uname -s)"
+ARCH="$(uname -m)"
+
+case "$OS" in
+  Darwin)
+    case "$ARCH" in
+      arm64)
+        BINARY="argyle-mock-darwin-arm64"
+        ;;
+      x86_64)
+        BINARY="argyle-mock-darwin-amd64"
+        ;;
+      *)
+        echo "Unsupported architecture: $ARCH" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+  Linux)
+    case "$ARCH" in
+      x86_64)
+        BINARY="argyle-mock-linux-amd64"
+        ;;
+      aarch64)
+        BINARY="argyle-mock-linux-arm64"
+        ;;
+      *)
+        echo "Unsupported architecture: $ARCH" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+  MINGW*|MSYS*|CYGWIN*)
+    BINARY="argyle-mock-windows-amd64.exe"
+    ;;
+  *)
+    echo "Unsupported OS: $OS" >&2
+    exit 1
+    ;;
+esac
+
+BINARY_PATH="$BIN_DIR/$BINARY"
+
+if [[ ! -f "$BINARY_PATH" ]]; then
+  echo "Binary not found: $BINARY_PATH" >&2
+  echo "Available binaries:" >&2
+  ls -1 "$BIN_DIR"/argyle-mock-* 2>/dev/null || echo "  (none)" >&2
+  exit 1
+fi
+
+exec "$BINARY_PATH" "$@"
+

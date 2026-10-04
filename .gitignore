@@ -1,0 +1,23 @@
+# Dependencies and build output, whatever your stack
+node_modules/
+.venv/
+venv/
+__pycache__/
+target/
+dist/
+build/
+.next/
+
+# Secrets
+.env
+.env.*
+
+# The mock's own state and binaries it may unpack
+db.json
+argyle-mock
+
+# SQLite's side files. data/dev.db itself is a required artifact: commit it.
+data/*.db-wal
+data/*.db-shm
+
+.DS_Store

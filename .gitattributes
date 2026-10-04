@@ -1,0 +1,6 @@
+# Shell scripts: they run under sh, locally or inside the Linux container, and CRLF line endings break them.
+start text eol=lf
+migrate text eol=lf
+*.sh text eol=lf
+scripts/init-db text eol=lf
+scripts/run-mock-server text eol=lf
